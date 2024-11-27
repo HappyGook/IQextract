@@ -6,6 +6,7 @@ import (
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 	"io"
+	"mime/multipart"
 	"os"
 )
 
@@ -38,7 +39,12 @@ func uploadHandler(c *gin.Context) {
 		c.JSON(400, gin.H{"Error": "Error retrieving file"})
 		return
 	}
-	defer file.Close()
+	defer func(file multipart.File) {
+		err := file.Close()
+		if err != nil {
+
+		}
+	}(file)
 
 	// Create a file named "file.wav" in the current directory
 	out, err := os.Create("file.wav")
@@ -46,7 +52,12 @@ func uploadHandler(c *gin.Context) {
 		c.JSON(500, gin.H{"Error": "Could not create file"})
 		return
 	}
-	defer out.Close()
+	defer func(out *os.File) {
+		err := out.Close()
+		if err != nil {
+
+		}
+	}(out)
 
 	// Write the uploaded file to disk
 	_, err = io.Copy(out, file)
