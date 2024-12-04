@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/binary"
+	"github.com/google/gousb"
 	"io"
 	"os"
 )
@@ -48,26 +49,8 @@ func ExtractIQData(filename string) ([]byte, error) {
 	return dataByte, nil
 }
 
-/*
 // SendIQData IQ geschickt
 func SendIQData(device *gousb.OutEndpoint, data []byte) error {
 	_, err := device.Write(data)
 	return err
 }
-
-// LoopIQData - geschickt in einer Schleife
-func LoopIQData(ctx context.Context, device *gousb.OutEndpoint, data []byte) {
-	for {
-		select {
-		case <-ctx.Done():
-			log.Println("Loop stopped.")
-			return
-		default:
-			if err := SendIQData(device, data); err != nil {
-				log.Println("Error sending data:", err)
-			}
-			time.Sleep(100 * time.Millisecond) // Adjust for your data rate
-		}
-	}
-}
-*/

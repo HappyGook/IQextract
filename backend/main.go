@@ -1,18 +1,38 @@
 package main
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
+	"github.com/google/gousb"
 	"io"
+	"log"
 	"mime/multipart"
 	"os"
+
+	"time"
+)
+
+var (
+	usbContext     *gousb.Context
+	usbDevice      *gousb.Device
+	usbEndpoint    *gousb.OutEndpoint
+	transferCtx    context.Context
+	cancelTransfer context.CancelFunc
+	iqData         []byte
+)
+
+const (
+	AirspyVID = gousb.ID(0x1D50)
+	AirspyPID = gousb.ID(0x60A1)
 )
 
 func extractHandler(c *gin.Context) {
 
 	result, err := ExtractIQData("file.wav")
+	iqData = result
 	if err != nil {
 
 		c.JSON(400, gin.H{
@@ -69,7 +89,101 @@ func uploadHandler(c *gin.Context) {
 	c.JSON(200, gin.H{"Message": "File uploaded successfully", "Filename": header.Filename})
 }
 
+func usbSetup() error {
+	var err error
+
+	usbContext = gousb.NewContext()
+	usbDevice, err = usbContext.OpenDeviceWithVIDPID(AirspyVID, AirspyPID)
+	if err != nil {
+		return fmt.Errorf("error opening device: %v", err)
+	}
+
+	if usbDevice == nil {
+		return fmt.Errorf("USB device not found")
+	}
+
+	err = usbDevice.SetAutoDetach(true)
+	if err != nil {
+		return err
+	}
+
+	config, err := usbDevice.Config(1)
+	if err != nil {
+		return fmt.Errorf("error configuring device: %v", err)
+	}
+
+	intf, err := config.Interface(0, 0) //REPLACE
+	if err != nil {
+		return fmt.Errorf("error opening interface: %v", err)
+	}
+	defer intf.Close()
+
+	usbEndpoint, err = intf.OutEndpoint(0x02) //REPLACE
+	if err != nil {
+		return fmt.Errorf("error opening endpoint: %v", err)
+	}
+
+	return nil
+}
+
+func startHandler(c *gin.Context) {
+	// Check if file exists
+	if _, err := os.Stat("file.wav"); os.IsNotExist(err) {
+		c.JSON(400, gin.H{"error": "No data file found. Please upload and extract data first."})
+		return
+	}
+
+	data := iqData
+
+	// Start the transfer loop
+	transferCtx, cancelTransfer = context.WithCancel(context.Background())
+	go func(ctx context.Context, data []byte) {
+		for {
+			select {
+			case <-ctx.Done():
+				log.Println("Data transfer stopped.")
+				return
+			default:
+				if err := SendIQData(usbEndpoint, data); err != nil {
+					log.Println("Error sending data:", err)
+				}
+				time.Sleep(100 * time.Millisecond) // Adjust as necessary
+			}
+		}
+	}(transferCtx, data)
+
+	c.JSON(200, gin.H{"message": "Data transfer started"})
+}
+
+func stopHandler(c *gin.Context) {
+	if cancelTransfer != nil {
+		cancelTransfer()
+		cancelTransfer = nil
+		c.JSON(200, gin.H{"message": "Data transfer stopped"})
+	} else {
+		c.JSON(400, gin.H{"error": "No data transfer in progress"})
+	}
+}
+
 func main() {
+	err := usbSetup()
+	if err != nil {
+		log.Fatalf("Error by setup: %v", err)
+	}
+
+	defer func(usbContext *gousb.Context) {
+		err := usbContext.Close()
+		if err != nil {
+			return
+		}
+	}(usbContext)
+
+	defer func(usbDevice *gousb.Device) {
+		err := usbDevice.Close()
+		if err != nil {
+			return
+		}
+	}(usbDevice)
 
 	defer func() {
 		err := os.Remove("file.wav")
@@ -82,64 +196,15 @@ func main() {
 
 	//router for request-handling
 	router := gin.Default()
-	router.Use(static.Serve("/", static.LocalFile("./bg/build", true)))
+	router.Use(static.Serve("/", static.LocalFile("./frontend/build", true)))
 
 	router.POST("/api/upload", uploadHandler)
 	router.GET("/api/extractHandler", extractHandler)
-	err := router.Run("localhost:8080")
+	router.POST("/api/start", startHandler)
+	router.POST("/api/stop", stopHandler)
+
+	err = router.Run("localhost:8080")
 	if err != nil {
 		return
 	}
-
-	/*
-		// Load IQ data from file
-		iqData, err := ExtractIQData("datei.wav")
-		if err != nil {
-			log.Fatal("Error extracting IQ data:", err)
-		}
-		data := ConvertIQData(iqData)
-		fmt.Println(data)
-
-		// Initialize USB
-		ctx := gousb.NewContext()
-		defer ctx.Close()
-
-		// Open USB device
-		device, err := ctx.OpenDeviceWithVIDPID(0x1234, 0x5678)
-		if err != nil {
-			log.Fatal("Error opening USB device:", err)
-		}
-		defer device.Close()
-
-		// Set up USB endpoint
-		config, err := device.Config(1)
-		if err != nil {
-			log.Fatal("Error getting device configuration:", err)
-		}
-		defer config.Close()
-
-		intf, err := config.Interface(0, 0)
-		if err != nil {
-			log.Fatal("Error setting up interface:", err)
-		}
-		defer intf.Close()
-
-		outEndpoint, err := intf.OutEndpoint(1)
-		if err != nil {
-			log.Fatal("Error setting up OUT endpoint:", err)
-		}
-
-		// Start IQ data loop
-		ctxLoop, cancel := context.WithCancel(context.Background())
-		go LoopIQData(ctxLoop, outEndpoint, data)
-
-		// Wait for user to stop
-		fmt.Println("Press Ctrl+C to stop...")
-		c := make(chan os.Signal, 1)
-		signal.Notify(c, os.Interrupt)
-		<-c
-		cancel()
-
-	*/
-
 }

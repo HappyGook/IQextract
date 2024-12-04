@@ -18,6 +18,8 @@ function App() {
       }
   };
 
+
+
   const { getRootProps, getInputProps } = useDropzone({
         onDrop,
         accept: ".wav", // Only accept .wav files
@@ -50,6 +52,38 @@ function App() {
         } catch (error) {
             console.error("Error while fetching data:", error);
             setResult("Error fetching data.");
+        }
+  };
+
+  const [isTransferRunning, setIsTransferRunning] = useState(false);
+
+  const startTransfer = async () => {
+        try {
+            const response = await fetch("/api/start", { method: "POST" });
+
+            if (response.ok) {
+                setIsTransferRunning(true);  // Update the state to indicate transfer has started
+            } else {
+                const errorData = await response.json();
+                console.error("Error starting transfer:", errorData);
+            }
+        } catch (error) {
+            console.error("Error starting transfer:", error);
+        }
+  };
+
+  const stopTransfer = async () => {
+        try {
+            const response = await fetch("/api/stop", { method: "POST" });
+
+            if (response.ok) {
+                setIsTransferRunning(false);  // Update the state to indicate transfer has stopped
+            } else {
+                const errorData = await response.json();
+                console.error("Error stopping transfer:", errorData);
+            }
+        } catch (error) {
+            console.error("Error while stopping transfer:", error);
         }
   };
 
@@ -132,6 +166,23 @@ function App() {
                   <p>{result}</p>
               </div>
           )}
+          {/* Button to start transfer */}
+          <button
+              onClick={startTransfer}
+              style={{ padding: "10px 20px", marginTop: "20px" }}
+              disabled={isTransferRunning}  // Disable button if transfer is running
+          >
+              Start Data Transfer
+          </button>
+
+          {/* Button to stop transfer */}
+          <button
+              onClick={stopTransfer}
+              style={{ padding: "10px 20px", marginTop: "20px" }}
+              disabled={!isTransferRunning}  // Disable button if transfer isn't running
+          >
+              Stop Data Transfer
+          </button>
       </div>
   );
 }
