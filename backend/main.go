@@ -72,10 +72,29 @@ func ExtractIQData(filename string) ([]byte, error) {
 	return dataByte, nil
 }
 
-// SendIQData IQ geschickt
+// SendIQData - IQ geschickt
 func SendIQData(device *gousb.OutEndpoint, data []byte) error {
-	_, err := device.Write(data)
-	return err
+	const chunkSize=512
+	log.Printf("Sending total data size: %d bytes",len(data))
+
+	for i := 0; i < len(data); i += chunkSize {
+		end := i + chunkSize
+		if end > len(data) {
+			end = len(data) // Last chunk may be smaller
+		}
+
+		chunk := data[i:end]
+		log.Printf("Sending chunk: %d bytes (from %d to %d)", len(chunk), i, end)
+
+		n, err := device.Write(chunk)
+		if err != nil {
+			log.Printf("Error sending chunk at index %d: %v", i, err)
+			return err
+		}
+		log.Printf("Successfully sent %d bytes", n)
+	}
+
+	return nil
 }
 
 func extractHandler(c *gin.Context) {
@@ -153,7 +172,7 @@ func usbSetup() error {
 
 	err = usbDevice.SetAutoDetach(true)
 	if err != nil {
-		return err
+		return fmt.Errorf("error setting auto-detach: %v", err)
 	}
 
 	config, err := usbDevice.Config(1)
@@ -161,17 +180,20 @@ func usbSetup() error {
 		return fmt.Errorf("error configuring device: %v", err)
 	}
 
-	intf, err := config.Interface(0, 0) //REPLACE
+	intf, err := config.Interface(0, 0) 
 	if err != nil {
 		return fmt.Errorf("error opening interface: %v", err)
 	}
 	defer intf.Close()
+
+	log. Println("Interface opened successfully")
 
 	usbEndpoint, err = intf.OutEndpoint(0x02) //REPLACE
 	if err != nil {
 		return fmt.Errorf("error opening endpoint: %v", err)
 	}
 
+	log.Println("USB endpoint successfully opened")
 	return nil
 }
 
@@ -193,10 +215,12 @@ func startHandler(c *gin.Context) {
 				log.Println("Data transfer stopped.")
 				return
 			default:
-				if err := SendIQData(usbEndpoint, data); err != nil {
-					log.Println("Error sending data:", err)
+				err := SendIQData(usbEndpoint, data)
+				if err != nil {
+					log.Println("Error sending data: %v", err)
+					time.Sleep(500*time.Millisecond)
 				}
-				time.Sleep(100 * time.Millisecond) // Adjust as necessary
+				time.Sleep(200 * time.Millisecond) // Adjust as necessary
 			}
 		}
 	}(transferCtx, data)
