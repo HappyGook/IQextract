@@ -252,7 +252,7 @@ func main() {
 	router.POST("/api/start", startHandler)
 	router.POST("/api/stop", stopHandler)
 
-	err = router.Run("localhost:8080")
+	err = router.Run("0.0.0.0:8080")
 	if err != nil {
 		return
 	}
