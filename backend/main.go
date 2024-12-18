@@ -12,7 +12,7 @@ import (
 	"log"
 	"mime/multipart"
 	"os"
-
+	"errors"
 	"time"
 )
 
@@ -24,6 +24,8 @@ var (
 	cancelTransfer context.CancelFunc
 	iqData         []byte
 )
+
+packetSize := 512
 
 const (
 	AirspyVID = gousb.ID(0x1D50)
