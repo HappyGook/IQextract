@@ -88,9 +88,12 @@ func SendIQData(device *gousb.OutEndpoint, data []byte) error {
 
 		n, err := device.Write(chunk)
 		if err != nil {
-			log.Printf("Error sending chunk at index %d: %v", i, err)
-			return err
+			log.Printf("Error sending chunk at index %d: %v", i/packetSize, err)
+			if errors.Unwrap(err) != nil {
+				log.Printf("Root cause of transfer error: %v", errors.Unwrap(err)) // Print the underlying error
+			}
 		}
+		return err
 		log.Printf("Successfully sent %d bytes", n)
 	}
 
