@@ -25,7 +25,7 @@ var (
 	iqData         []byte
 )
 
-packetSize := 512
+const packetSize = 512
 
 const (
 	AirspyVID = gousb.ID(0x1D50)
