@@ -94,10 +94,10 @@ func SendIQData(device *gousb.OutEndpoint, data []byte) error {
 			if errors.Unwrap(err) != nil {
 				log.Printf("Root cause of transfer error: %v", errors.Unwrap(err)) // Print the underlying error
 			}
-		}
-		return err
+		}	
 		log.Printf("Successfully sent %d bytes", n)
 	}
+
 
 	return nil
 }
@@ -193,7 +193,7 @@ func usbSetup() error {
 
 	log. Println("Interface opened successfully")
 
-	usbEndpoint, err = intf.OutEndpoint(0x02) //REPLACE
+	usbEndpoint, err = intf.OutEndpoint(0x02)
 	if err != nil {
 		return fmt.Errorf("error opening endpoint: %v", err)
 	}
