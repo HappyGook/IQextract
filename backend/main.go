@@ -77,6 +77,7 @@ func ExtractIQData(filename string) ([]byte, error) {
 // SendIQData - IQ geschickt
 func SendIQData(device *gousb.OutEndpoint, data []byte) error {
 	const chunkSize=512
+	log.Printf("Endpoint address: %d, Max packet size: %d", device.Desc.Address, device.Desc.MaxPacketSize)
 	log.Printf("Sending total data size: %d bytes",len(data))
 
 	for i := 0; i < len(data); i += chunkSize {
@@ -94,7 +95,7 @@ func SendIQData(device *gousb.OutEndpoint, data []byte) error {
 			if errors.Unwrap(err) != nil {
 				log.Printf("Root cause of transfer error: %v", errors.Unwrap(err)) // Print the underlying error
 			}
-		}	
+		}
 		log.Printf("Successfully sent %d bytes", n)
 	}
 
@@ -162,44 +163,54 @@ func uploadHandler(c *gin.Context) {
 	c.JSON(200, gin.H{"Message": "File uploaded successfully", "Filename": header.Filename})
 }
 
-func usbSetup() error {
-	var err error
-
-	usbContext = gousb.NewContext()
-	usbDevice, err = usbContext.OpenDeviceWithVIDPID(AirspyVID, AirspyPID)
+func usbSetup() (*gousb.Device, *gousb.OutEndpoint, error) {
+	
+	usbContext := gousb.NewContext()
+	usbDevice, err := usbContext.OpenDeviceWithVIDPID(AirspyVID, AirspyPID)
 	if err != nil {
-		return fmt.Errorf("error opening device: %v", err)
+		usbContext.Close()
+		return nil, nil, fmt.Errorf("error opening device: %v", err)
 	}
 
 	if usbDevice == nil {
-		return fmt.Errorf("USB device not found")
+		usbContext.Close()
+		return nil, nil, fmt.Errorf("USB device not found")
 	}
 
 	err = usbDevice.SetAutoDetach(true)
 	if err != nil {
-		return fmt.Errorf("error setting auto-detach: %v", err)
+		usbContext.Close()
+		usbDevice.Close()
+		return nil, nil, fmt.Errorf("error setting auto-detach: %v", err)
 	}
 
 	config, err := usbDevice.Config(1)
 	if err != nil {
-		return fmt.Errorf("error configuring device: %v", err)
+		usbContext.Close()
+		usbDevice.Close()
+		return nil, nil, fmt.Errorf("error configuring device: %v", err)
 	}
 
 	intf, err := config.Interface(0, 0) 
 	if err != nil {
-		return fmt.Errorf("error opening interface: %v", err)
+		usbDevice.Close()
+		usbContext.Close()
+		return nil, nil, fmt.Errorf("error opening interface: %v", err)
 	}
-	defer intf.Close()
+	
 
 	log. Println("Interface opened successfully")
 
 	usbEndpoint, err = intf.OutEndpoint(0x02)
 	if err != nil {
-		return fmt.Errorf("error opening endpoint: %v", err)
+		intf.Close()
+		usbContext.Close()
+		usbDevice.Close()
+		return nil, nil, fmt.Errorf("error opening endpoint: %v", err)
 	}
 
 	log.Println("USB endpoint successfully opened")
-	return nil
+	return usbDevice, usbEndpoint, nil
 }
 
 func startHandler(c *gin.Context) {
@@ -244,10 +255,11 @@ func stopHandler(c *gin.Context) {
 }
 
 func main() {
-	err := usbSetup()
+	device, endpoint, err := usbSetup()
 	if err != nil {
 		log.Fatalf("Error by setup: %v", err)
 	}
+	defer device.Close()
 
 	defer func(usbContext *gousb.Context) {
 		err := usbContext.Close()
