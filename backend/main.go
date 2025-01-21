@@ -255,7 +255,7 @@ func stopHandler(c *gin.Context) {
 }
 
 func main() {
-	device, endpoint, err := usbSetup()
+	device, _, err := usbSetup()
 	if err != nil {
 		log.Fatalf("Error by setup: %v", err)
 	}
