@@ -1,0 +1,59 @@
+stages:
+  - install
+  - build
+  - test
+  - deploy
+
+variables:
+  NODE_ENV: test # Example environment variable
+
+# Install dependencies
+install:
+  stage: install
+  image: node:18 # Use Node.js Docker image
+  script:
+    - npm ci # Clean install dependencies
+    - cd backend && go mod download # Install Go dependencies
+  cache:
+    key: node-modules-cache
+    paths:
+      - node_modules/ # Cache node_modules
+      - backend/pkg/mod/ # Cache Go modules
+
+# Build the project
+build:
+  stage: build
+  image: node:18
+  script:
+    - npm run build # Build React app
+    - cd backend && go build -o app # Build Go backend
+  artifacts:
+    paths:
+      - dist/ # React build output
+      - backend/app # Go binary
+
+# Test the project
+test:
+  stage: test
+  image: node:18
+  script:
+    - npm run test # Run React tests
+    - cd backend && go test ./... # Run Go unit tests
+
+# End-to-End Testing with Playwright
+e2e-tests:
+  stage: test
+  image: mcr.microsoft.com/playwright:v1.37.0-focal # Playwright testing image
+  script:
+    - npm run test:e2e # Run Playwright tests
+  dependencies:
+    - build # Ensure the app is built before testing
+
+# Deploy the application
+deploy:
+  stage: deploy
+  image: node:18
+  script:
+    - npm run start-all # Start both React and Go apps
+  only:
+    - main # Only deploy on main branch
