@@ -20,7 +20,7 @@ install:
       - node_modules/ # Cache node_modules
       - backend/pkg/mod/ # Cache Go modules
 
-# Build the project
+# Build the projecT
 build:
   stage: build
   image: node:18
