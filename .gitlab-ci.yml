@@ -10,20 +10,19 @@ variables:
 # Install dependencies
 install:
   stage: install
-  image: node:18 # Use Node.js Docker image
+  image: node:18
   script:
-    # Debug: List directory structure
     - echo "Checking directory structure during install stage:"
-    - ls -R
-    - cd IQextract/frontend
-    - npm ci # Clean install dependencies for frontend
-    - cd ../backend
+    - ls -R # Debugging step
+    - cd frontend # Navigate to the frontend directory
+    - npm ci # Clean install dependencies
+    - cd ../backend # Navigate to the backend directory
     - go mod download # Install Go dependencies
   cache:
     key: node-modules-cache
     paths:
-      - IQextract/frontend/node_modules/ # Cache node_modules
-      - IQextract/backend/pkg/mod/ # Cache Go modules
+      - frontend/node_modules/ # Cache node_modules
+      - backend/pkg/mod/ # Cache Go modules
 
 # Build the project
 build:
@@ -31,15 +30,15 @@ build:
   image: node:18
   script:
     - echo "Checking directory structure during build stage:"
-    - ls -R
-    - cd IQextract/frontend
+    - ls -R # Debugging step
+    - cd frontend
     - npm run build # Build React app
     - cd ../backend
     - go build -o app # Build Go backend
   artifacts:
     paths:
-      - IQextract/frontend/dist/ # React build output
-      - IQextract/backend/app # Go binary
+      - frontend/build/ # React build output
+      - backend/app # Go binary
 
 # Test the project
 test:
@@ -47,7 +46,7 @@ test:
   image: node:18
   script:
     - echo "Running React unit tests"
-    - cd IQextract/frontend
+    - cd frontend
     - npm run test # Run React tests
     - cd ../backend
     - echo "Running Go unit tests"
@@ -58,7 +57,7 @@ e2e-tests:
   stage: test
   image: mcr.microsoft.com/playwright:v1.37.0-focal # Playwright testing image
   script:
-    - cd IQextract/frontend
+    - cd frontend
     - npm run test:e2e # Run Playwright tests
   dependencies:
     - build # Ensure the app is built before testing
@@ -69,7 +68,7 @@ deploy:
   image: node:18
   script:
     - echo "Starting both React and Go apps"
-    - cd IQextract/frontend
+    - cd frontend
     - npm run start-all # Start both React and Go apps
   only:
     - main # Only deploy on the main branch
