@@ -16,7 +16,7 @@ install:
     # Install Go
     - echo "Installing Go ${GO_VERSION}..."
     - curl -OL https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz
-    - sudo tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz
+    - tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz
     - export PATH=$PATH:/usr/local/go/bin
     - go version # Verify Go installation
 
@@ -43,7 +43,7 @@ build:
     # Set up Go again
     - echo "Installing Go ${GO_VERSION} in build stage..."
     - curl -OL https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz
-    - sudo tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz
+    - tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz
     - export PATH=$PATH:/usr/local/go/bin
     - go version # Verify Go installation
 
@@ -69,7 +69,7 @@ test:
     # Set up Go again
     - echo "Installing Go ${GO_VERSION} in test stage..."
     - curl -OL https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz
-    - sudo tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz
+    - tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz
     - export PATH=$PATH:/usr/local/go/bin
     - go version # Verify Go installation
 
@@ -101,7 +101,7 @@ deploy:
     # Set up Go again
     - echo "Installing Go ${GO_VERSION} in deploy stage..."
     - curl -OL https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz
-    - sudo tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz
+    - tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz
     - export PATH=$PATH:/usr/local/go/bin
     - go version # Verify Go installation
 
