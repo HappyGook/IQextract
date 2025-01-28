@@ -6,7 +6,7 @@ stages:
 
 variables:
   NODE_ENV: test # Example environment variable
-  GO_VERSION: 1.23 # Define the Go version to install
+  GO_VERSION: 1.23.3 # Define the Go version to install
 
 # Install dependencies
 install:
