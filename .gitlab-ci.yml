@@ -6,17 +6,28 @@ stages:
 
 variables:
   NODE_ENV: test # Example environment variable
+  GO_VERSION: 1.20.6 # Define the Go version to install
 
 # Install dependencies
 install:
   stage: install
   image: node:18
   script:
-    - echo "Checking directory structure during install stage:"
-    - ls -R # Debugging step
-    - cd frontend # Navigate to the frontend directory
-    - npm install # Clean install dependencies
-    - cd ../backend # Navigate to the backend directory
+    # Install Go
+    - echo "Installing Go ${GO_VERSION}..."
+    - curl -OL https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz
+    - sudo tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz
+    - export PATH=$PATH:/usr/local/go/bin
+    - go version # Verify Go installation
+
+    # Install Frontend Dependencies
+    - echo "Installing frontend dependencies..."
+    - cd frontend
+    - npm ci # Clean install dependencies
+    - cd ../backend
+
+    # Install Backend Dependencies
+    - echo "Installing backend dependencies..."
     - go mod download # Install Go dependencies
   cache:
     key: node-modules-cache
@@ -29,12 +40,22 @@ build:
   stage: build
   image: node:18
   script:
-    - echo "Checking directory structure during build stage:"
-    - ls -R # Debugging step
+    # Set up Go again
+    - echo "Installing Go ${GO_VERSION} in build stage..."
+    - curl -OL https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz
+    - sudo tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz
+    - export PATH=$PATH:/usr/local/go/bin
+    - go version # Verify Go installation
+
+    # Build Frontend
+    - echo "Building frontend..."
     - cd frontend
-    - npm run build # Build React app
+    - npm run build
     - cd ../backend
-    - go build -o app # Build Go backend
+
+    # Build Backend
+    - echo "Building backend..."
+    - go build -o app # Build Go binary
   artifacts:
     paths:
       - frontend/build/ # React build output
@@ -45,12 +66,22 @@ test:
   stage: test
   image: node:18
   script:
-    - echo "Running React unit tests"
+    # Set up Go again
+    - echo "Installing Go ${GO_VERSION} in test stage..."
+    - curl -OL https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz
+    - sudo tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz
+    - export PATH=$PATH:/usr/local/go/bin
+    - go version # Verify Go installation
+
+    # Run Frontend Tests
+    - echo "Running frontend unit tests..."
     - cd frontend
-    - npm run test # Run React tests
+    - npm run test
     - cd ../backend
-    - echo "Running Go unit tests"
-    - go test ./... # Run Go unit tests
+
+    # Run Backend Tests
+    - echo "Running backend unit tests..."
+    - go test ./...
 
 # End-to-End Testing with Playwright
 e2e-tests:
@@ -67,8 +98,16 @@ deploy:
   stage: deploy
   image: node:18
   script:
+    # Set up Go again
+    - echo "Installing Go ${GO_VERSION} in deploy stage..."
+    - curl -OL https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz
+    - sudo tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz
+    - export PATH=$PATH:/usr/local/go/bin
+    - go version # Verify Go installation
+
+    # Start the application
     - echo "Starting both React and Go apps"
     - cd frontend
-    - npm run start-all # Start both React and Go apps
+    - npm run start-all
   only:
     - main # Only deploy on the main branch
