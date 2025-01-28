@@ -15,7 +15,7 @@ install:
     - echo "Checking directory structure during install stage:"
     - ls -R # Debugging step
     - cd frontend # Navigate to the frontend directory
-    - npm ci # Clean install dependencies
+    - npm install # Clean install dependencies
     - cd ../backend # Navigate to the backend directory
     - go mod download # Install Go dependencies
   cache:
