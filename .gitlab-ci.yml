@@ -12,12 +12,14 @@ install:
   stage: install
   image: node:18 # Use Node.js Docker image
   script:
-    - npm install # Install dependencies
+    - cd IQextract/frontend
+    - npm ci # Clean install dependencies
+    - cd ..
     - cd backend && go mod download # Install Go dependencies
   cache:
     key: node-modules-cache
     paths:
-      - node_modules/ # Cache node_modules
+      - IQextract/frontend/node_modules/ # Cache node_modules
       - backend/pkg/mod/ # Cache Go modules
 
 # Build the projecT
