@@ -12,7 +12,7 @@ install:
   stage: install
   image: node:18 # Use Node.js Docker image
   script:
-    - npm ci # Clean install dependencies
+    - npm install # Install dependencies
     - cd backend && go mod download # Install Go dependencies
   cache:
     key: node-modules-cache
