@@ -29,6 +29,8 @@ install:
 
     # Install Backend Dependencies
     - echo "Installing backend dependencies..."
+    - apt-get update
+    - apt-get install -y libusb-1.0-0-dev
     - go mod download # Install Go dependencies
   cache:
     key: node-modules-cache
@@ -47,6 +49,11 @@ build:
     - tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz
     - export PATH=$PATH:/usr/local/go/bin
     - go version # Verify Go installation
+
+    # Install libusb for the build stage
+    - echo "Installing libusb..."
+    - apt-get update
+    - apt-get install -y libusb-1.0-0-dev
 
 
     # Build Frontend
