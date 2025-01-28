@@ -24,6 +24,7 @@ install:
     - echo "Installing frontend dependencies..."
     - cd frontend
     - npm install # Clean install dependencies
+    - npm list react-scripts 
     - cd ../backend
 
     # Install Backend Dependencies
@@ -47,9 +48,11 @@ build:
     - export PATH=$PATH:/usr/local/go/bin
     - go version # Verify Go installation
 
+
     # Build Frontend
     - echo "Building frontend..."
     - cd frontend
+    - npm install 
     - npm run build
     - cd ../backend
 
