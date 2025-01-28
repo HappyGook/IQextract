@@ -23,7 +23,7 @@ install:
     # Install Frontend Dependencies
     - echo "Installing frontend dependencies..."
     - cd frontend
-    - npm ci # Clean install dependencies
+    - npm install # Clean install dependencies
     - cd ../backend
 
     # Install Backend Dependencies
