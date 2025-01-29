@@ -74,7 +74,7 @@ build:
 # Test the project
 test:
   stage: test
-  image: node:18
+  image: mcr.microsoft.com/playwright:v1.37.0-focal
   script:
     # Set up Go again
     - echo "Installing Go ${GO_VERSION} in test stage..."
@@ -88,21 +88,16 @@ test:
     - cd frontend
     - npm install
     - npm run test
+    - echo "Running Playwright tests..."
+    - npx playwright test
     - cd ../backend
 
     # Run Backend Tests
     - echo "Running backend unit tests..."
     - go test ./...
-
-# End-to-End Testing with Playwright
-e2e-tests:
-  stage: test
-  image: mcr.microsoft.com/playwright:v1.37.0-focal # Playwright testing image
-  script:
-    - cd frontend
-    - npm run test:e2e # Run Playwright tests
   dependencies:
-    - build # Ensure the app is built before testing
+    - build
+
 
 # Deploy the application
 deploy:
