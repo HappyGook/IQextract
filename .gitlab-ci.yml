@@ -86,6 +86,7 @@ test:
     # Run Frontend Tests
     - echo "Running frontend unit tests..."
     - cd frontend
+    - npm install
     - npm run test
     - cd ../backend
 
