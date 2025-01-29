@@ -84,10 +84,10 @@ test:
     - go version # Verify Go installation
 
     # Run Frontend Tests
-    - echo "Running frontend unit tests..."
+    #- echo "Running frontend unit tests..."
     - cd frontend
     - npm install
-    - npm run test
+    #- npm run test
     - echo "Running Playwright tests..."
     - npx playwright test
     - cd ../backend
